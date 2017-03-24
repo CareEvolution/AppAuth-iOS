@@ -28,20 +28,24 @@ typedef void (^PostRegistrationCallback)(OIDServiceConfiguration *configuration,
 
 /*! @brief The OIDC issuer from which the configuration will be discovered.
  */
-static NSString *const kIssuer = @"https://issuer.example.com";
+static NSString *const kIssuer = @"https://windows-10.careevolution.com:20443/WebClientTest.Adapter1.WebClient/identityserver";
 
 /*! @brief The OAuth client ID.
     @discussion For client configuration instructions, see the README.
         Set to nil to use dynamic registration with this example.
     @see https://github.com/openid/AppAuth-iOS/blob/master/Examples/Example-iOS_ObjC/README.md
  */
-static NSString *const kClientID = @"YOUR_CLIENT_ID";
+static NSString *const kClientID = @"AppAuthTest";
 
 /*! @brief The OAuth redirect URI for the client @c kClientID.
     @discussion For client configuration instructions, see the README.
     @see https://github.com/openid/AppAuth-iOS/blob/master/Examples/Example-iOS_ObjC/README.md
  */
-static NSString *const kRedirectURI = @"com.example.app:/oauth2redirect/example-provider";
+static NSString *const kRedirectURI = @"com.careevolution.appauthtest://oidccallback/";
+
+/*! @brief IdentityServer3 requires a client secret for code flow.
+ */
+static NSString *const kClientSecret = @"secret";
 
 /*! @brief NSCoding key for the authState property.
  */
@@ -290,7 +294,7 @@ static NSString *const kAppAuthExampleAuthStateKey = @"authState";
                             clientSecret:registrationResponse.clientSecret];
       }];
     } else {
-      [self doAuthWithAutoCodeExchange:configuration clientID:kClientID clientSecret:nil];
+      [self doAuthWithAutoCodeExchange:configuration clientID:kClientID clientSecret:kClientSecret];
     }
    }];
 }
@@ -322,7 +326,7 @@ static NSString *const kAppAuthExampleAuthStateKey = @"authState";
                            clientSecret:registrationResponse.clientSecret];
       }];
     } else {
-      [self doAuthWithoutCodeExchange:configuration clientID:kClientID clientSecret:nil];
+      [self doAuthWithoutCodeExchange:configuration clientID:kClientID clientSecret:kClientSecret];
     }
   }];
 }
