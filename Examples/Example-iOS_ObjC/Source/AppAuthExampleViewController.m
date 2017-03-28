@@ -51,7 +51,7 @@ static NSString *const kClientSecret = @"secret";
  */
 static NSString *const kAppAuthExampleAuthStateKey = @"authState";
 
-@interface AppAuthExampleViewController () <OIDAuthStateChangeDelegate, OIDAuthStateErrorDelegate>
+@interface AppAuthExampleViewController () <OIDAuthStateChangeDelegate, OIDAuthStateErrorDelegate, SFSafariViewControllerDelegate>
 @end
 
 @implementation AppAuthExampleViewController
@@ -354,7 +354,31 @@ static NSString *const kAppAuthExampleAuthStateKey = @"authState";
 }
 
 - (IBAction)clearAuthState:(nullable id)sender {
+  [self endSession:nil];
   [self setAuthState:nil];
+}
+
+- (IBAction)endSession:(nullable id)sender {
+  // Hack: guessing end_session_endpoint based on userinfo_endpoint
+  NSURL *userinfoEndpoint = _authState.lastAuthorizationResponse.request.configuration.discoveryDocument.userinfoEndpoint;
+  if (!userinfoEndpoint) {
+    [self logMessage:@"Can't guess endsession endpoint when userinfo endpoint not declared in discovery document"];
+    return;
+  }
+  NSString *endsessionUrlString = [userinfoEndpoint absoluteString];
+                                               
+  endsessionUrlString = [endsessionUrlString stringByReplacingOccurrencesOfString: @"userinfo"
+                                                                       withString: @"endsession"];
+  NSString *idToken = _authState.lastTokenResponse.idToken;
+  if (idToken) {
+    endsessionUrlString = [NSString stringWithFormat:@"%@?id_token_hint=%@", endsessionUrlString, idToken];
+  }
+  NSURL *endsessionUrl = [NSURL URLWithString:endsessionUrlString];
+  [self logMessage:@"Endsession endpoint: %@", endsessionUrl];
+  
+  SFSafariViewController *safariVC = [[SFSafariViewController alloc]initWithURL:endsessionUrl entersReaderIfAvailable:NO];
+  safariVC.delegate = self;
+  [self presentViewController:safariVC animated:NO completion:nil];
 }
 
 - (IBAction)clearLog:(nullable id)sender {
@@ -473,6 +497,17 @@ static NSString *const kAppAuthExampleAuthStateKey = @"authState";
                                                  ([_logTextView.text length] > 0) ? @"\n" : @"",
                                                  dateString,
                                                  log];
+}
+
+#pragma mark - SFSafariViewController delegate methods for logging out
+-(void)safariViewController:(SFSafariViewController *)controller didCompleteInitialLoad:(BOOL)didLoadSuccessfully {
+  [self logMessage:@"safariViewController did complete initial load"];
+  if (!didLoadSuccessfully) { [self logMessage:@"  - did NOT load successfully"]; }
+  [controller dismissViewControllerAnimated:true completion: nil];
+}
+
+-(void)safariViewControllerDidFinish:(SFSafariViewController *)controller {
+  [controller dismissViewControllerAnimated:true completion: nil];
 }
 
 @end

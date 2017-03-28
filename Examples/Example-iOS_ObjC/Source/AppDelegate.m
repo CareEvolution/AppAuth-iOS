@@ -49,7 +49,9 @@
             options:(NSDictionary<NSString *, id> *)options {
   // Sends the URL to the current authorization flow (if any) which will process it if it relates to
   // an authorization response.
+  NSLog(@"openURL: %@", url);
   if ([_currentAuthorizationFlow resumeAuthorizationFlowWithURL:url]) {
+    NSLog(@"Auth resumed");
     _currentAuthorizationFlow = nil;
     return YES;
   }
